@@ -54,7 +54,7 @@ function validateRow(row) {
     Percentage,
   } = row;
   Student_Id = parseInt(Student_Id, 10);
-  Upload_Date = new Date(Upload_Date);
+  //   Upload_Date = new Date(Upload_Date);
   Title_Code = parseInt(Title_Code, 10);
   if (
     typeof Student_Id === "number" &&
@@ -124,6 +124,7 @@ function validHeaders(file) {
               });
             promises.push(promise);
           } else {
+            reject(new Error());
             console.error("Invalid record:", row);
             stream.destroy();
           }
