@@ -131,12 +131,9 @@ function validHeaders(file) {
 }
 
 function sendRowToAPI(row) {
-  // Placeholder API endpoint (replace with the actual endpoint)
   const apiEndpoint = "http://localhost:3000/sample-endpoint-url";
 
-  // Placeholder API request payload (replace with the actual payload structure)
   const payload = {
-    // Replace with the structure of your payload
     studentId: row.Student_Id,
     firstName: row.First_Name,
     lastName: row.Last_Name,
@@ -146,7 +143,6 @@ function sendRowToAPI(row) {
     percentage: row.Percentage,
   };
 
-  // Send a POST request to the API endpoint
   return axios.post(apiEndpoint, payload);
 }
 
@@ -157,7 +153,6 @@ validFile(file)
   .then(() => validHeaders(file))
   .then((result) => {
     console.log(result);
-    // Process each row and send it to the API
     const stream = fs.createReadStream(file, "utf8").pipe(csv());
     stream.on("data", (row) => {
       sendRowToAPI(row)
