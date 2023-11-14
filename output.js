@@ -3,6 +3,12 @@ const csv = require("csv-parser");
 const path = require("path");
 const axios = require("axios");
 const nodemailer = require("nodemailer");
+const readline = require("readline");
+
+const rl = readline.createInterface({
+  input: process.stdin,
+  output: process.stdout,
+});
 
 const invalidRows = [];
 let failedRows = [];
@@ -48,11 +54,8 @@ function validateRow(row) {
     Percentage,
   } = row;
   Student_Id = parseInt(Student_Id, 10);
-  //   console.log("Student_Id:", Student_Id);
   Upload_Date = new Date(Upload_Date);
-  //   console.log("Upload_Date:", Upload_Date);
   Title_Code = parseInt(Title_Code, 10);
-  //   console.log("Title_Code:", Title_Code);
   if (
     typeof Student_Id === "number" &&
     typeof First_Name === "string" &&
@@ -64,10 +67,8 @@ function validateRow(row) {
     parseFloat(Percentage) >= 0 &&
     parseFloat(Percentage) <= 1
   ) {
-    // console.log("True");
     return true;
   } else {
-    // console.log("False");
     invalidRows.push(row);
     return false;
   }
@@ -184,19 +185,6 @@ function validHeaders(file) {
               }
             });
           }
-
-          //   if (successfulRows.length !== 0) {
-          //     console.log(
-          //       "The records that were successfully sent to API:",
-          //       successfulRows
-          //     );
-          //   }
-          //   if (failedRows.length !== 0) {
-          //     console.log(
-          //       "The records that were failed to send to API:",
-          //       failedRows
-          //     );
-          //   }
         });
       }
     });
@@ -230,17 +218,22 @@ function generateEmailText(msg, rows) {
   return emailText;
 }
 
-const file = "Node.js Sample_Test_File.csv";
+rl.question("Enter the CSV file name: ", (answer) => {
+  const file = answer.trim();
 
-validFile(file)
-  .then(() => checkFileNotEmpty(file))
-  .then(() => validHeaders(file))
-  .then((result) => {
-    console.log(result);
-  })
-  .catch((error) => {
-    console.error(error.message);
-    if (error.message === "Invalid row. Please check the row data.") {
-      console.error("Invalid rows:", invalidRows);
-    }
-  });
+  validFile(file)
+    .then(() => checkFileNotEmpty(file))
+    .then(() => validHeaders(file))
+    .then((result) => {
+      console.log(result);
+    })
+    .catch((error) => {
+      console.error(error.message);
+      if (error.message === "Invalid row. Please check the row data.") {
+        console.error("Invalid rows:", invalidRows);
+      }
+    })
+    .finally(() => {
+      rl.close();
+    });
+});
