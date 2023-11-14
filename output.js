@@ -2,10 +2,12 @@ const fs = require("fs");
 const csv = require("csv-parser");
 const path = require("path");
 const axios = require("axios");
+const nodemailer = require("nodemailer");
 
 const invalidRows = [];
 let failedRows = [];
 let successfulRows = [];
+let N = 10;
 
 function validFile(file) {
   return new Promise((resolve, reject) => {
@@ -46,11 +48,11 @@ function validateRow(row) {
     Percentage,
   } = row;
   Student_Id = parseInt(Student_Id, 10);
-  console.log("Student_Id:", Student_Id);
+  //   console.log("Student_Id:", Student_Id);
   Upload_Date = new Date(Upload_Date);
-  console.log("Upload_Date:", Upload_Date);
+  //   console.log("Upload_Date:", Upload_Date);
   Title_Code = parseInt(Title_Code, 10);
-  console.log("Title_Code:", Title_Code);
+  //   console.log("Title_Code:", Title_Code);
   if (
     typeof Student_Id === "number" &&
     typeof First_Name === "string" &&
@@ -62,10 +64,10 @@ function validateRow(row) {
     parseFloat(Percentage) >= 0 &&
     parseFloat(Percentage) <= 1
   ) {
-    console.log("True");
+    // console.log("True");
     return true;
   } else {
-    console.log("False");
+    // console.log("False");
     invalidRows.push(row);
     return false;
   }
@@ -77,6 +79,7 @@ function validHeaders(file) {
 
     let headersChecked = false;
     let rowCount = 0;
+    const promises = [];
 
     stream.on("headers", (headers) => {
       const expectedHeadersList = [
@@ -104,14 +107,28 @@ function validHeaders(file) {
     stream.on("data", (row) => {
       if (headersChecked) {
         rowCount++;
-        const isRowValid = validateRow(row);
-        if (!isRowValid) {
-          stream.destroy();
-          reject(new Error("Invalid row. Please check the row data."));
+        if (rowCount <= N) {
+          const isRowValid = validateRow(row);
+          if (isRowValid) {
+            const promise = sendRowToAPI(row)
+              .then(() => {
+                console.log("Record sent to API successfully");
+                successfulRows.push(row);
+                console.log("The record sent successfully:", row);
+              })
+              .catch((err) => {
+                console.error(`Error sending record to API: ${err.message}`);
+                failedRows.push(row);
+                console.error("The record not sent successfully:", row);
+              });
+            promises.push(promise);
+          } else {
+            console.error("Invalid record:", row);
+            stream.destroy();
+          }
         }
-        if (rowCount >= 10) {
-          stream.destroy();
-          reject(new Error("Processed 10 rows. Further processing stopped."));
+        if (rowCount == N) {
+          console.log("Processed", N, "records. Further processing stopped.");
         }
       }
     });
@@ -120,7 +137,67 @@ function validHeaders(file) {
       if (!headersChecked) {
         reject(new Error("The file has no headers."));
       } else {
-        resolve("The file processing is successful.");
+        Promise.all(promises).then(() => {
+          var transporter = nodemailer.createTransport({
+            service: "gmail",
+            auth: {
+              user: "myemail@gmail.com",
+              pass: "mypassword",
+            },
+          });
+
+          // Send success email
+          if (failedRows.length == 0) {
+            var successMailOptions = {
+              from: "myemail@gmail.com",
+              to: "system_admin@gmail.com",
+              subject: "Records Processing Success",
+              text: "All the records were successfully processed!",
+            };
+
+            transporter.sendMail(successMailOptions, function (error, info) {
+              if (error) {
+                console.log(error);
+              } else {
+                console.log("Success Email sent: " + info.response);
+                console.log("Records are successfully processed");
+              }
+            });
+          }
+
+          if (failedRows.length !== 0) {
+            var failureMailOptions = {
+              from: "myemail@gmail.com",
+              to: "system_admin@gmail.com",
+              subject: "Records Processing Failure",
+              text: generateEmailText(
+                "These records were not sent to the API successfully:",
+                failedRows
+              ),
+            };
+
+            transporter.sendMail(failureMailOptions, function (error, info) {
+              if (error) {
+                console.log(error);
+              } else {
+                console.log("Failure Email sent: " + info.response);
+              }
+            });
+          }
+
+          //   if (successfulRows.length !== 0) {
+          //     console.log(
+          //       "The records that were successfully sent to API:",
+          //       successfulRows
+          //     );
+          //   }
+          //   if (failedRows.length !== 0) {
+          //     console.log(
+          //       "The records that were failed to send to API:",
+          //       failedRows
+          //     );
+          //   }
+        });
       }
     });
 
@@ -146,6 +223,13 @@ function sendRowToAPI(row) {
   return axios.post(apiEndpoint, payload);
 }
 
+function generateEmailText(msg, rows) {
+  let emailText = msg;
+  emailText += "\nDetails of records:\n";
+  emailText += JSON.stringify(rows, null, 2);
+  return emailText;
+}
+
 const file = "Node.js Sample_Test_File.csv";
 
 validFile(file)
@@ -153,18 +237,6 @@ validFile(file)
   .then(() => validHeaders(file))
   .then((result) => {
     console.log(result);
-    const stream = fs.createReadStream(file, "utf8").pipe(csv());
-    stream.on("data", (row) => {
-      sendRowToAPI(row)
-        .then(() => {
-          console.log("Row sent to API successfully");
-          successfulRows.push(row);
-        })
-        .catch((err) => {
-          console.error(`Error sending row to API: ${err.message}`);
-          failedRows.push(row);
-        });
-    });
   })
   .catch((error) => {
     console.error(error.message);
