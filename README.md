@@ -10,21 +10,21 @@ Installation:
 Clone the repository: git clone <repository_url>
 Change into the project directory
 Install dependencies: npm install
-Run the Tool:
 
+Run the Tool:
 Open a terminal in the project directory.
 Run the tool: node output.js
 Enter the CSV file name when prompted.
-User Input:
 
+User Input:
 The tool prompts the user to enter the CSV file name. Ensure the file is in the correct format.
 The tool processes the first N records from the CSV file.
-Output:
 
+Output:
 The tool prints the processing result and logs any invalid rows.
 Success and failure emails are sent to the specified email addresses.
-Dependencies:
 
+Dependencies:
 Axios: Used for making HTTP requests.
 Csv-parser: Parses CSV files.
 Nodemailer: Sends emails.
@@ -32,6 +32,6 @@ Readline: Handles user input.
 Configuration:
 
 Update email credentials, recipient addresses, and other details in the email options.
-Note:
 
+Note:
 Ensure you have Node.js installed on your machine.
