@@ -23,15 +23,18 @@ The tool processes the first N records from the CSV file.
 Output:
 The tool prints the processing result and logs any invalid rows.
 Success and failure emails are sent to the specified email addresses.
-
+<br />
 Dependencies:
+<br />
 Axios: Used for making HTTP requests.
 Csv-parser: Parses CSV files.
 Nodemailer: Sends emails.
 Readline: Handles user input.
+<br />
 Configuration:
-
+<br />
 Update email credentials, recipient addresses, and other details in the email options.
 <br />
 Note:
+<br />
 Ensure you have Node.js installed on your machine.
