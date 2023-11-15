@@ -32,6 +32,6 @@ Readline: Handles user input.
 Configuration:
 
 Update email credentials, recipient addresses, and other details in the email options.
-
+<br />
 Note:
 Ensure you have Node.js installed on your machine.
